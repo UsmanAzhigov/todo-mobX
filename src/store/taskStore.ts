@@ -1,66 +1,72 @@
-import create from 'zustand';
-import { TaskStore } from '../types/task.types';
+import { makeAutoObservable } from 'mobx';
+import { TaskStoreModel } from '../types/task.types';
 
-const useTaskStore = create<TaskStore>((set) => ({
-  input: '',
-  tasks: [],
-  checkedTasks: [],
-  sortOrder: 'asc',
+export class TaskStore implements TaskStoreModel {
+  input: string = '';
+  tasks: string[] = [];
+  checkedTasks: number[] = [];
+  sortOrder: 'asc' | 'desc' = 'asc';
 
-  setInput: (value) => set({ input: value }),
-  setTasks: (newTasks) => set({ tasks: newTasks }),
-  setCheckedTasks: (newCheckedTasks) => set({ checkedTasks: newCheckedTasks }),
-  setSortOrder: (order) => set({ sortOrder: order }),
+  constructor() {
+    makeAutoObservable(this);
+  }
 
-  addTask: () => {
-    set((state) => {
-      if (state.input.trim() !== '') {
-        return { tasks: [...state.tasks, state.input], input: '' };
-      }
-      return state;
-    });
-  },
+  setInput(value: string): void {
+    this.input = value;
+  }
 
-  allClear: () => {
+  setTasks(newTasks: string[]): void {
+    this.tasks = newTasks;
+  }
+
+  setCheckedTasks(newCheckedTasks: number[]): void {
+    this.checkedTasks = newCheckedTasks;
+  }
+
+  setSortOrder(order: 'asc' | 'desc'): void {
+    this.sortOrder = order;
+  }
+
+  addTask(): void {
+    if (this.input.trim() !== '') {
+      this.tasks = [...this.tasks, this.input];
+      this.input = '';
+    }
+  }
+
+  allClear(): void {
     if (window.confirm('Вы действительно хотите очистить все?')) {
-      set({ tasks: [], checkedTasks: [] });
+      this.tasks = [];
+      this.checkedTasks = [];
     }
-  },
+  }
 
-  onDelete: (index) => {
+  onDelete(index: number): void {
     if (window.confirm('Вы действительно хотите удалить задачу?')) {
-      set((state) => {
-        const updatedTasks = state.tasks.filter((_, i) => i !== index);
-        const updatedCheckedTasks = state.checkedTasks.filter((taskIndex) => taskIndex !== index);
-
-        return { tasks: updatedTasks, checkedTasks: updatedCheckedTasks };
-      });
+      this.tasks = this.tasks.filter((_, i) => i !== index);
+      this.checkedTasks = this.checkedTasks.filter((taskIndex) => taskIndex !== index);
     }
-  },
+  }
 
-  onDeleteSelected: () => {
+  onDeleteSelected(): void {
     if (window.confirm('Вы действительно хотите удалить выбранные задачи?')) {
-      set((state) => {
-        const updatedTasks = state.tasks.filter((_, index) => !state.checkedTasks.includes(index));
-        const updatedCheckedTasks: any = [];
-        return { tasks: updatedTasks, checkedTasks: updatedCheckedTasks };
-      });
+      this.tasks = this.tasks.filter((_, index) => !this.checkedTasks.includes(index));
+      this.checkedTasks = [];
     }
-  },
+  }
 
-  onChecked: (index) => {
-    set((state) => {
-      const isChecked = state.checkedTasks.includes(index)
-        ? state.checkedTasks.filter((taskIndex) => taskIndex !== index)
-        : [...state.checkedTasks, index];
+  onChecked(index: number): void {
+    const isChecked = this.checkedTasks.includes(index)
+      ? this.checkedTasks.filter((taskIndex) => taskIndex !== index)
+      : [...this.checkedTasks, index];
 
-      return { checkedTasks: isChecked };
-    });
-  },
+    this.checkedTasks = isChecked;
+  }
 
-  toggleSortOrder: () => {
-    set((state) => ({ sortOrder: state.sortOrder === 'asc' ? 'desc' : 'asc' }));
-  },
-}));
+  toggleSortOrder(): void {
+    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+  }
+}
 
-export default useTaskStore;
+const taskStore = new TaskStore();
+export default taskStore;

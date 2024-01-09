@@ -1,4 +1,4 @@
-export type TaskStore = {
+export type TaskStoreModel = {
   input: string;
   tasks: string[];
   checkedTasks: number[];
